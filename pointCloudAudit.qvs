@@ -1,0 +1,85 @@
+/*
+DOCUMENT CONTROL:
+__title__ = "pointCloudAudit"
+__author__ = "adam.bear@wessexwater.co.uk"
+__github__ = "@adambear82"
+__version__ = "1.0.0"
+
+WHAT DOES THIS SCRIPT DO:
+to understand the density of point clouds we take a pts file
+in the qlikview user interface use a scatter plot to zoom in
+to just some of the points near the center of the plot
+
+to calculate all of the x and y values as relative to the center
+point, first we find min and max values, from which we find
+mid values, which we subtract from x and y values.
+
+HOW TO ADJUST THIS SCRIPT:
+edit the variables vFilePath and vFileName to refer to the
+filethat you want to audit
+
+*/
+
+//copy paste the folder where the points file is located here
+SET vFilePath = "C:\temp\recap temp\test export points";
+
+//copy paste the name of the points file here
+SET vFileName = "test export square";
+
+//you dont nned to include the extension thats added here
+SET vFileExt = "pts";
+
+//then all the above bits all put together like this
+SET vFile ="$(vFilePath)\$(vFileName).$(vFileExt)";
+
+Directory;
+
+//first we make a temp table to hold all the x and y values
+Temp:
+
+//min and max values are found and converted from meters to mm
+LOAD
+min(@1)*1000 as minx,
+max(@1)*1000 as maxx,
+min(@2)*1000 as miny,
+max(@2)*1000 as maxy
+
+FROM
+//now we can refer to the file quickly
+[$(vFile)]
+//the file type is interpreted as txt with standard 1252 codepage
+//the rows start with all the data in a single column
+//each row is split into multiple columns wherever there is a space
+//a header of 1 row is removed that does not contain any data we want
+(txt, codepage is 1252, explicit labels, delimiter is ' ', no quotes, header is 1 lines);
+
+//whereas SET is used to store a value,
+//LET is used to store evaluated expressions for min and max x and y values
+LET vMinx = Peek('minx',0,'Temp');
+LET vMaxx = Peek('maxx',0,'Temp');
+LET vMiny = Peek('miny',0,'Temp');
+LET vMaxy = Peek('maxy',0,'Temp');
+
+//mid values are evaluated as  (min+max)/2
+LET vMidx = (($(vMinx) + $(vMaxx)) / 2);
+LET vMidy = (($(vMiny) + $(vMaxy)) / 2);
+
+//now that the above evaluted values are stored we can drop the temp table
+DROP Table Temp;
+
+//now we can make a new table
+Data:
+
+//x and y values are adjusted to there distance from the mid values
+LOAD
+(@1*1000) - $(vMidx) as diffX,
+(@2*1000) - $(vMidy) as diffY
+
+FROM
+//and if the file changes then it changes everywhere
+[$(vFile)]
+//as above we deliminate the row splittling it into into columns
+(txt, codepage is 1252, explicit labels, delimiter is ' ', no quotes, header is 1 lines);
+
+//the values diffX and diffY are now available to be used in the table Data
+//and can be reffered to in the qlikview user interface
