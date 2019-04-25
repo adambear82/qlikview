@@ -16,7 +16,7 @@ mid values, which we subtract from x and y values.
 
 HOW TO ADJUST THIS SCRIPT:
 edit the variables vFilePath and vFileName to refer to the
-filethat you want to audit
+file that you want to audit
 
 */
 
