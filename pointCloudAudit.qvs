@@ -26,7 +26,7 @@ SET vFilePath = "C:\temp\recap temp\test export points";
 //copy paste the name of the points file here
 SET vFileName = "test export square";
 
-//you dont nned to include the extension thats added here
+//you dont need to include the extension that is added here
 SET vFileExt = "pts";
 
 //then all the above bits all put together like this
